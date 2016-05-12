@@ -124,6 +124,22 @@ namespace Microsoft.Rest.Generator.Ruby
             PropertyTemplateModels = new List<PropertyTemplateModel>();
             source.Properties.ForEach(p => PropertyTemplateModels.Add(new PropertyTemplateModel(p)));
 
+            if (!string.IsNullOrEmpty(source.PolymorphicDiscriminator))
+            {
+                if (!source.Properties.Any(p => p.Name == source.PolymorphicDiscriminator))
+                {
+                    var polymorphicProperty = new Property
+                    {
+                        IsRequired = true,
+                        Name = source.PolymorphicDiscriminator,
+                        SerializedName = source.PolymorphicDiscriminator,
+                        Documentation = "Polymorhpic Discriminator",
+                        Type = new PrimaryType(KnownPrimaryType.String)
+                    };
+                    source.Properties.Add(polymorphicProperty);
+                }
+            }
+
             if (source.BaseModelType != null)
             {
                 this.parent = new ModelTemplateModel(source.BaseModelType, allTypes);
@@ -169,6 +185,14 @@ namespace Microsoft.Rest.Generator.Ruby
         public virtual string GetBaseTypeName()
         {
             return this.BaseModelType != null ? " < " + this.BaseModelType.Name : string.Empty;
+        }
+
+        public virtual string ConstructModelMapper()
+        {
+            var modelMapper = this.ConstructMapper(SerializedName, null, false, true);
+            var builder = new IndentedStringBuilder("  ");
+            builder.AppendLine("{{{0}}}", modelMapper);
+            return builder.ToString();
         }
     }
 }

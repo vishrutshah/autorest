@@ -3,6 +3,8 @@
 
 using Microsoft.Rest.Generator.ClientModel;
 using Microsoft.Rest.Generator.Utilities;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Microsoft.Rest.Generator.Ruby
 {

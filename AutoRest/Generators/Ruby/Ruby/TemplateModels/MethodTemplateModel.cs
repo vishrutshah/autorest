@@ -370,11 +370,12 @@ namespace Microsoft.Rest.Generator.Ruby
 
             // Secondly parse each js object into appropriate Ruby type (DateTime, Byte array, etc.)
             // and overwrite temporary variable variable value.
-            string deserializationLogic = type.DeserializeType(this.Scope, tempVariable);
+            // string deserializationLogic = type.DeserializeType(this.Scope, tempVariable);
+            string deserializationLogic = GetDeserializationString(type, outputVariable, tempVariable);
             builder.AppendLine(deserializationLogic);
 
             // Assigning value of temporary variable to the output variable.
-            return builder.AppendLine("{0} = {1}", outputVariable, tempVariable).ToString();
+            return builder.ToString();
         }
 
         /// <summary>
@@ -516,6 +517,44 @@ namespace Microsoft.Rest.Generator.Ruby
                 urlPathParamName += m.Groups[1].Value;
             }
             return urlPathParamName;
+        }
+
+       public string ConstructRequestBodyMapper(string outputVariable)
+        {
+            var builder = new IndentedStringBuilder("  ");
+            if (RequestBody.Type is CompositeType)
+            {
+                builder.AppendLine("{0} = {1}.mapper()", outputVariable, RequestBody.Type.Name);
+            }
+            else
+            {
+                builder.AppendLine("{0} = {{{1}}}", outputVariable, 
+                    RequestBody.Type.ConstructMapper(RequestBody.SerializedName, RequestBody, false, false));
+            }
+            return builder.ToString();
+        }
+
+        public string GetDeserializationString(IType type, string valueReference = "result", string responseVariable = "parsed_response")
+        {
+            var builder = new IndentedStringBuilder("  ");
+            if (type is CompositeType)
+            {
+                builder.AppendLine("result_mapper = {0}.mapper()", type.Name);
+            }
+            else
+            {
+                builder.AppendLine("result_mapper = {{{0}}}", type.ConstructMapper(responseVariable, null, false, false));
+            }
+            if (Group == null)
+            {
+                builder.AppendLine("{1} = self.deserialize(result_mapper, {0}, '{1}')", responseVariable, valueReference);
+            }
+            else
+            {
+                builder.AppendLine("{1} = @client.deserialize(result_mapper, {0}, '{1}')", responseVariable, valueReference);
+            }
+
+            return builder.ToString();
         }
     }
 }

@@ -4,11 +4,13 @@
 using System;
 using Microsoft.Rest.Generator.ClientModel;
 using System.Linq;
+using System.Globalization;
 
 namespace Microsoft.Rest.Generator.Ruby.TemplateModels
 {
     using Utilities;
     using System.Collections.Generic;
+    using System.Reflection;
 
     /// <summary>
     /// Keeps a few aux method used across all templates/models.
@@ -492,6 +494,275 @@ namespace Microsoft.Rest.Generator.Ruby.TemplateModels
                 type.BaseModelType != null &&
                 (type.BaseModelType.Equals(possibleAncestorType) ||
                  type.BaseModelType.DerivesFrom(possibleAncestorType));
+        }
+
+        public static string ConstructMapper(this IType type, string serializedName, IParameter parameter, bool isPageable, bool expandComposite)
+        {
+            var builder = new IndentedStringBuilder("  ");
+            string defaultValue = null;
+            bool isRequired = false;
+            bool isConstant = false;
+            bool isReadOnly = false;
+            Dictionary<Constraint, string> constraints = null;
+            var property = parameter as Property;
+            if (parameter != null)
+            {
+                defaultValue = parameter.DefaultValue;
+                isRequired = parameter.IsRequired;
+                isConstant = parameter.IsConstant;
+                constraints = parameter.Constraints;
+            }
+            if (property != null)
+            {
+                isReadOnly = property.IsReadOnly;
+            }
+            CompositeType composite = type as CompositeType;
+            if (composite != null && composite.ContainsConstantProperties && (parameter != null && parameter.IsRequired))
+            {
+                defaultValue = "{}";
+            }
+            SequenceType sequence = type as SequenceType;
+            DictionaryType dictionary = type as DictionaryType;
+            PrimaryType primary = type as PrimaryType;
+            EnumType enumType = type as EnumType;
+            builder.AppendLine("").Indent();
+            if (isRequired)
+            {
+                builder.AppendLine("required: true,");
+            }
+            else
+            {
+                builder.AppendLine("required: false,");
+            }
+            if (isReadOnly)
+            {
+                builder.AppendLine("readOnly: true,");
+            }
+            if (isConstant)
+            {
+                builder.AppendLine("isConstant: true,");
+            }
+            if (serializedName != null)
+            {
+                builder.AppendLine("serializedName: '{0}',", serializedName);
+            }
+            if (defaultValue != null)
+            {
+                builder.AppendLine("defaultValue: {0},", defaultValue);
+            }
+            if (constraints != null && constraints.Count > 0)
+            {
+                builder.AppendLine("constraints: {").Indent();
+                var keys = constraints.Keys.ToList<Constraint>();
+                for (int j = 0; j < keys.Count; j++)
+                {
+                    var constraintValue = constraints[keys[j]];
+                    if (keys[j] == Constraint.Pattern)
+                    {
+                        constraintValue = string.Format(CultureInfo.InvariantCulture, "'{0}'", constraintValue);
+                    }
+                    if (j != keys.Count - 1)
+                    {
+                        builder.AppendLine("{0}: {1},", keys[j], constraintValue);
+                    }
+                    else
+                    {
+                        builder.AppendLine("{0}: {1}", keys[j], constraintValue);
+                    }
+                }
+                builder.Outdent().AppendLine("},");
+            }
+            // Add type information 
+            if (primary != null)
+            {
+                if (primary.Type == KnownPrimaryType.Boolean)
+                {
+                    builder.AppendLine("type: {").Indent().AppendLine("name: 'Boolean'").Outdent().AppendLine("}");
+                }
+                else if (primary.Type == KnownPrimaryType.Double)
+                {
+                    builder.AppendLine("type: {").Indent().AppendLine("name: 'Double'").Outdent().AppendLine("}");
+                }
+                else if (primary.Type == KnownPrimaryType.Int || primary.Type == KnownPrimaryType.Long ||
+                    primary.Type == KnownPrimaryType.Decimal)
+                {
+                    builder.AppendLine("type: {").Indent().AppendLine("name: 'Number'").Outdent().AppendLine("}");
+                }
+                else if (primary.Type == KnownPrimaryType.String || primary.Type == KnownPrimaryType.Uuid)
+                {
+                    builder.AppendLine("type: {").Indent().AppendLine("name: 'String'").Outdent().AppendLine("}");
+                }
+                else if (primary.Type == KnownPrimaryType.Uuid)
+                {
+                    builder.AppendLine("type: {").Indent().AppendLine("name: 'Uuid'").Outdent().AppendLine("}");
+                }
+                else if (primary.Type == KnownPrimaryType.ByteArray)
+                {
+                    builder.AppendLine("type: {").Indent().AppendLine("name: 'ByteArray'").Outdent().AppendLine("}");
+                }
+                else if (primary.Type == KnownPrimaryType.Base64Url)
+                {
+                    builder.AppendLine("type: {").Indent().AppendLine("name: 'Base64Url'").Outdent().AppendLine("}");
+                }
+                else if (primary.Type == KnownPrimaryType.Date)
+                {
+                    builder.AppendLine("type: {").Indent().AppendLine("name: 'Date'").Outdent().AppendLine("}");
+                }
+                else if (primary.Type == KnownPrimaryType.DateTime)
+                {
+                    builder.AppendLine("type: {").Indent().AppendLine("name: 'DateTime'").Outdent().AppendLine("}");
+                }
+                else if (primary.Type == KnownPrimaryType.DateTimeRfc1123)
+                {
+                    builder.AppendLine("type: {").Indent().AppendLine("name: 'DateTimeRfc1123'").Outdent().AppendLine("}");
+                }
+                else if (primary.Type == KnownPrimaryType.TimeSpan)
+                {
+                    builder.AppendLine("type: {").Indent().AppendLine("name: 'TimeSpan'").Outdent().AppendLine("}");
+                }
+                else if (primary.Type == KnownPrimaryType.UnixTime)
+                {
+                    builder.AppendLine("type: {").Indent().AppendLine("name: 'UnixTime'").Outdent().AppendLine("}");
+                }
+                else if (primary.Type == KnownPrimaryType.Object)
+                {
+                    builder.AppendLine("type: {").Indent().AppendLine("name: 'Object'").Outdent().AppendLine("}");
+                }
+                else if (primary.Type == KnownPrimaryType.Stream)
+                {
+                    builder.AppendLine("type: {").Indent().AppendLine("name: 'Stream'").Outdent().AppendLine("}");
+                }
+                else
+                {
+                    throw new NotImplementedException(string.Format(CultureInfo.InvariantCulture, "{0} is not a supported Type.", primary));
+                }
+            }
+            else if (enumType != null && enumType.Name != null)
+            {
+                builder.AppendLine("type: {")
+                         .Indent()
+                         .AppendLine("name: 'Enum',")
+                         .AppendLine("allowedValues: {0}", enumType.GetEnumValuesArray())
+                       .Outdent()
+                       .AppendLine("}");
+            }
+            else if (sequence != null)
+            {
+                builder.AppendLine("type: {")
+                         .Indent()
+                         .AppendLine("name: 'Sequence',")
+                         .AppendLine("element: {")
+                           .Indent()
+                           .AppendLine("{0}", sequence.ElementType.ConstructMapper(sequence.ElementType.Name + "ElementType", null, false, false))
+                         .Outdent().AppendLine("}").Outdent().AppendLine("}");
+            }
+            else if (dictionary != null)
+            {
+                builder.AppendLine("type: {")
+                         .Indent()
+                         .AppendLine("name: 'Dictionary',")
+                         .AppendLine("value: {")
+                           .Indent()
+                           .AppendLine("{0}", dictionary.ValueType.ConstructMapper(dictionary.ValueType.Name + "ElementType", null, false, false))
+                         .Outdent().AppendLine("}").Outdent().AppendLine("}");
+            }
+            else if (composite != null)
+            {
+                builder.AppendLine("type: {")
+                         .Indent()
+                         .AppendLine("name: 'Composite',");
+                if (composite.PolymorphicDiscriminator != null)
+                {
+                    builder.AppendLine("polymorphicDiscriminator: '{0}',", composite.PolymorphicDiscriminator);
+                    var polymorphicType = composite;
+                    while (polymorphicType.BaseModelType != null)
+                    {
+                        polymorphicType = polymorphicType.BaseModelType;
+                    }
+                    builder.AppendLine("uberParent: '{0}',", polymorphicType.Name);
+                }
+                if (!expandComposite)
+                {
+                    builder.AppendLine("className: '{0}'", composite.Name).Outdent().AppendLine("}");
+                }
+                else
+                {
+                    builder.AppendLine("className: '{0}',", composite.Name)
+                           .AppendLine("modelProperties: {").Indent();
+                    var composedPropertyList = new List<Property>(composite.ComposedProperties);
+                    for (var i = 0; i < composedPropertyList.Count; i++)
+                    {
+                        var prop = composedPropertyList[i];
+                        var serializedPropertyName = prop.SerializedName;
+                        PropertyInfo nextLinkName = null;
+                        string nextLinkNameValue = null;
+                        if (isPageable)
+                        {
+                            var itemName = composite.GetType().GetProperty("ItemName");
+                            nextLinkName = composite.GetType().GetProperty("NextLinkName");
+                            nextLinkNameValue = (string)nextLinkName.GetValue(composite);
+                            if (itemName != null && ((string)itemName.GetValue(composite) == prop.Name))
+                            {
+                                serializedPropertyName = "";
+                            }
+
+                            if (prop.Name.Contains("nextLink") && nextLinkName != null && nextLinkNameValue == null)
+                            {
+                                continue;
+                            }
+                        }
+
+                        if (i != composedPropertyList.Count - 1)
+                        {
+                            if (!isPageable)
+                            {
+                                builder.AppendLine("{0}: {{{1}}},", prop.Name, prop.Type.ConstructMapper(serializedPropertyName, prop, false, false));
+                            }
+                            else
+                            {
+                                // if pageable and nextlink is also present then we need a comma as nextLink would be the next one to be added
+                                if (nextLinkNameValue != null)
+                                {
+                                    builder.AppendLine("{0}: {{{1}}},", prop.Name, prop.Type.ConstructMapper(serializedPropertyName, prop, false, false));
+                                }
+                                else
+                                {
+                                    builder.AppendLine("{0}: {{{1}}}", prop.Name, prop.Type.ConstructMapper(serializedPropertyName, prop, false, false));
+                                }
+                                    
+                            }   
+                        }
+                        else
+                        {
+                            builder.AppendLine("{0}: {{{1}}}", prop.Name, prop.Type.ConstructMapper(serializedPropertyName, prop, false, false));
+                        }
+                    }
+                    // end of modelProperties and type
+                    builder.Outdent().AppendLine("}").Outdent().AppendLine("}");
+                }
+            }
+            else
+            {
+                throw new NotImplementedException(string.Format(CultureInfo.InvariantCulture, "{0} is not a supported Type.", primary));
+            }
+            return builder.ToString();
+        }
+
+        /// <summary>
+        /// Returns a Array containing the values in a string enum type
+        /// </summary>
+        /// <param name="type">EnumType to model as Javascript Array</param>
+        /// <returns>The Javascript Array as a string</returns>
+        public static string GetEnumValuesArray(this EnumType type)
+        {
+            if (type == null)
+            {
+                throw new ArgumentNullException("type");
+            }
+
+            return string.Format(CultureInfo.InvariantCulture,
+                "[ {0} ]", string.Join(", ",
+                type.Values.Select(p => string.Format(CultureInfo.InvariantCulture, "'{0}'", p.Name))));
         }
     }
 }
