@@ -149,36 +149,6 @@ namespace Microsoft.Rest.Generator.Ruby
         }
 
         /// <summary>
-        /// Generates code for model serialization.
-        /// </summary>
-        /// <param name="variableName">Variable serialize model from.</param>
-        /// <param name="type">The type of the model.</param>
-        /// <returns>The code for serialization in string format.</returns>
-        public virtual string SerializeProperty(string variableName, IType type)
-        {
-            var builder = new IndentedStringBuilder("  ");
-
-            string serializationLogic = type.SerializeType(this.Scope, variableName);
-            builder.AppendLine(serializationLogic);
-
-            return builder.ToString();
-        }
-
-        /// <summary>
-        /// Generates code for model deserialization.
-        /// </summary>
-        /// <param name="variableName">Variable deserialize model from.</param>
-        /// <param name="type">The type of the model.</param>
-        /// <returns>The code for вуserialization in string format.</returns>
-        public virtual string DeserializeProperty(string variableName, IType type)
-        {
-            var builder = new IndentedStringBuilder("  ");
-
-            string serializationLogic = type.DeserializeType(this.Scope, variableName);
-            return builder.AppendLine(serializationLogic).ToString();
-        }
-
-        /// <summary>
         /// Returns code for declaring inheritance.
         /// </summary>
         /// <returns>Code for declaring inheritance.</returns>

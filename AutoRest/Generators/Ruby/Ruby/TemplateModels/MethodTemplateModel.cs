@@ -379,26 +379,6 @@ namespace Microsoft.Rest.Generator.Ruby
         }
 
         /// <summary>
-        /// Creates a code in form of string which serializes given input variable of given type.
-        /// </summary>
-        /// <param name="inputVariable">The input variable.</param>
-        /// <param name="type">The type of input variable.</param>
-        /// <param name="outputVariable">The output variable.</param>
-        /// <returns>The serialization code.</returns>
-        public virtual string CreateSerializationString(string inputVariable, IType type, string outputVariable)
-        {
-            var builder = new IndentedStringBuilder("  ");
-
-            // Firstly recursively serialize each component of the object.
-            string serializationLogic = type.SerializeType(this.Scope, inputVariable);
-
-            builder.AppendLine(serializationLogic);
-
-            // After that - generate JSON object after serializing each component.
-            return builder.AppendLine("{0} = {1} != nil ? JSON.generate({1}, quirks_mode: true) : nil", outputVariable, inputVariable).ToString();
-        }
-
-        /// <summary>
         /// Saves url items from the URL into collection.
         /// </summary>
         /// <param name="hashName">The name of the collection save url items to.</param>
