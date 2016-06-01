@@ -49,8 +49,8 @@ module MsRest
       #
       def deserialize(mapper, response_body, object_name)
         return response_body if response_body.nil?
-        object_name = mapper[:serialized_name] unless object_name.nil?
 
+        object_name = mapper[:serialized_name] unless object_name.nil?
         mapper_type = mapper[:type][:name]
 
         if !mapper_type.match(/^(Number|Double|ByteArray|Boolean|Date|DateTime|DateTimeRfc1123|UnixTime|Enum|String)$/i).nil?
@@ -64,6 +64,9 @@ module MsRest
         else
           payload = ""
         end
+
+        payload = mapper[:default_value] if mapper[:is_constant]
+
         payload
       end
 
@@ -186,7 +189,7 @@ module MsRest
       def serialize(mapper, object, object_name)
         object_name = mapper[:serialized_name] unless object_name.nil?
 
-        if mapper[:required] && object.nil? && !mapper[:isConstant]
+        if mapper[:required] && object.nil? && !mapper[:is_constant]
           fail ValidationError, "#{object_name} is required and cannot be nil"
         end
 
