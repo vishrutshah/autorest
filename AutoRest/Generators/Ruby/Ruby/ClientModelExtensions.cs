@@ -318,19 +318,19 @@ namespace Microsoft.Rest.Generator.Ruby.TemplateModels
             }
             if (isReadOnly)
             {
-                builder.AppendLine("readOnly: true,");
+                builder.AppendLine("read_only: true,");
             }
             if (isConstant)
             {
-                builder.AppendLine("isConstant: true,");
+                builder.AppendLine("is_constant: true,");
             }
             if (serializedName != null)
             {
-                builder.AppendLine("serializedName: '{0}',", serializedName);
+                builder.AppendLine("serialized_name: '{0}',", serializedName);
             }
             if (defaultValue != null)
             {
-                builder.AppendLine("defaultValue: {0},", defaultValue);
+                builder.AppendLine("default_value: {0},", defaultValue);
             }
             if (constraints != null && constraints.Count > 0)
             {
@@ -455,22 +455,22 @@ namespace Microsoft.Rest.Generator.Ruby.TemplateModels
                          .AppendLine("name: 'Composite',");
                 if (composite.PolymorphicDiscriminator != null)
                 {
-                    builder.AppendLine("polymorphicDiscriminator: '{0}',", composite.PolymorphicDiscriminator);
+                    builder.AppendLine("polymorphic_discriminator: '{0}',", composite.PolymorphicDiscriminator);
                     var polymorphicType = composite;
                     while (polymorphicType.BaseModelType != null)
                     {
                         polymorphicType = polymorphicType.BaseModelType;
                     }
-                    builder.AppendLine("uberParent: '{0}',", polymorphicType.Name);
+                    builder.AppendLine("uber_parent: '{0}',", polymorphicType.Name);
                 }
                 if (!expandComposite)
                 {
-                    builder.AppendLine("className: '{0}'", composite.Name).Outdent().AppendLine("}");
+                    builder.AppendLine("class_name: '{0}'", composite.Name).Outdent().AppendLine("}");
                 }
                 else
                 {
-                    builder.AppendLine("className: '{0}',", composite.Name)
-                           .AppendLine("modelProperties: {").Indent();
+                    builder.AppendLine("class_name: '{0}',", composite.Name)
+                           .AppendLine("model_properties: {").Indent();
                     var composedPropertyList = new List<Property>(composite.ComposedProperties);
                     for (var i = 0; i < composedPropertyList.Count; i++)
                     {
@@ -480,15 +480,15 @@ namespace Microsoft.Rest.Generator.Ruby.TemplateModels
                         string nextLinkNameValue = null;
                         if (isPageable)
                         {
-                            var itemName = composite.GetType().GetProperty("ItemName");
-                            nextLinkName = composite.GetType().GetProperty("NextLinkName");
+                            var itemName = composite.GetType().GetProperty("item_name");
+                            nextLinkName = composite.GetType().GetProperty("next_link_name");
                             nextLinkNameValue = (string)nextLinkName.GetValue(composite);
                             if (itemName != null && ((string)itemName.GetValue(composite) == prop.Name))
                             {
                                 serializedPropertyName = "";
                             }
 
-                            if (prop.Name.Contains("nextLink") && nextLinkName != null && nextLinkNameValue == null)
+                            if (prop.Name.Contains("next_link") && nextLinkName != null && nextLinkNameValue == null)
                             {
                                 continue;
                             }

@@ -49,7 +49,7 @@ module MsRest
       #
       def deserialize(mapper, response_body, object_name)
         return response_body if response_body.nil?
-        object_name = mapper[:serializedName] unless object_name.nil?
+        object_name = mapper[:serialized_name] unless object_name.nil?
 
         mapper_type = mapper[:type][:name]
 
@@ -127,28 +127,28 @@ module MsRest
       # @param object_name [String] Name of the deserialized object.
       #
       def deserialize_composite_type(mapper, response_body, object_name)
-        if mapper[:type][:className].nil?
-          fail DeserializationError.new("'className' metadata for a composite type must be defined in the mapper and it must be of type Hash in #{object_name}", nil, nil, response_body)
+        if mapper[:type][:class_name].nil?
+          fail DeserializationError.new("'class_name' metadata for a composite type must be defined in the mapper and it must be of type Hash in #{object_name}", nil, nil, response_body)
         end
 
-        if !mapper[:type][:polymorphicDiscriminator].nil?
+        if !mapper[:type][:polymorphic_discriminator].nil?
           # Handle polymorphic types
-          parent_class = get_model(mapper[:type][:className])
+          parent_class = get_model(mapper[:type][:class_name])
           discriminator = parent_class.class_eval("@@discriminatorMap")
-          model_name = response_body["#{mapper[:type][:polymorphicDiscriminator]}"]
+          model_name = response_body["#{mapper[:type][:polymorphic_discriminator]}"]
           model_class = get_model(discriminator[model_name].capitalize)
         else
-          model_class = get_model(mapper[:type][:className])
+          model_class = get_model(mapper[:type][:class_name])
         end
 
         result = model_class.new
 
         model_mapper = model_class.mapper()
-        model_props = model_mapper[:type][:modelProperties]
+        model_props = model_mapper[:type][:model_properties]
 
         unless model_props.nil?
           model_props.each do |key, val|
-            result.instance_variable_set("@#{key}", deserialize(val, response_body[val[:serializedName].to_s], object_name))
+            result.instance_variable_set("@#{key}", deserialize(val, response_body[val[:serialized_name].to_s], object_name))
           end
         end
         result
@@ -184,7 +184,7 @@ module MsRest
       # @param object_name [String] Name of the serialized object.
       #
       def serialize(mapper, object, object_name)
-        object_name = mapper[:serializedName] unless object_name.nil?
+        object_name = mapper[:serialized_name] unless object_name.nil?
 
         if mapper[:required] && object.nil? && !mapper[:isConstant]
           fail ValidationError, "#{object_name} is required and cannot be nil"
@@ -195,10 +195,10 @@ module MsRest
         end
 
         # Set defaults
-        unless mapper[:defaultValue].nil?
-          object = mapper[:defaultValue] if object.nil?
+        unless mapper[:default_value].nil?
+          object = mapper[:default_value] if object.nil?
         end
-        object = mapper[:defaultValue] if mapper[:isConstant]
+        object = mapper[:default_value] if mapper[:isConstant]
 
         payload = Hash.new
         mapper_type = mapper[:type][:name]
@@ -273,17 +273,17 @@ module MsRest
       # @param object_name [String] Name of the serialized object.
       #
       def serialize_composite_type(mapper, object, object_name)
-        if !mapper[:type][:polymorphicDiscriminator].nil?
+        if !mapper[:type][:polymorphic_discriminator].nil?
           # Handle polymorphic types
           model_name = object.class.to_s.split('::')[-1]
           model_class = get_model(model_name)
         else
-          model_class = get_model(mapper[:type][:className])
+          model_class = get_model(mapper[:type][:class_name])
         end
 
         payload = Hash.new
         model_mapper = model_class.mapper()
-        model_props = model_mapper[:type][:modelProperties]
+        model_props = model_mapper[:type][:model_properties]
 
         unless model_props.nil?
           model_props.each do |key, value|
@@ -293,7 +293,7 @@ module MsRest
             end
 
             sub_payload = serialize(value, instance_variable, object_name)
-            payload[value[:serializedName].to_s] = sub_payload unless instance_variable.nil?
+            payload[value[:serialized_name].to_s] = sub_payload unless instance_variable.nil?
           end
         end
         payload

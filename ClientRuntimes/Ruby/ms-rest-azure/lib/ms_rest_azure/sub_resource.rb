@@ -14,14 +14,14 @@ module MsRestAzure
     def self.mapper
       {
         required: false,
-        serializedName: 'SubResource',
+        serialized_name: 'SubResource',
         type: {
           name: 'Composite',
-          className: 'SubResource',
-          modelProperties: {
+          class_name: 'SubResource',
+          model_properties: {
             id: {
               required: false,
-              serializedName: 'id',
+              serialized_name: 'id',
               type: {
                 name: 'String'
               }
