@@ -370,7 +370,6 @@ namespace Microsoft.Rest.Generator.Ruby
 
             // Secondly parse each js object into appropriate Ruby type (DateTime, Byte array, etc.)
             // and overwrite temporary variable variable value.
-            // string deserializationLogic = type.DeserializeType(this.Scope, tempVariable);
             string deserializationLogic = GetDeserializationString(type, outputVariable, tempVariable);
             builder.AppendLine(deserializationLogic);
 
@@ -509,7 +508,7 @@ namespace Microsoft.Rest.Generator.Ruby
             else
             {
                 builder.AppendLine("{0} = {{{1}}}", outputVariable, 
-                    RequestBody.Type.ConstructMapper(RequestBody.SerializedName, RequestBody, false, false));
+                    RequestBody.Type.ConstructMapper(RequestBody.SerializedName, RequestBody, false));
             }
             return builder.ToString();
         }
@@ -523,7 +522,7 @@ namespace Microsoft.Rest.Generator.Ruby
             }
             else
             {
-                builder.AppendLine("result_mapper = {{{0}}}", type.ConstructMapper(responseVariable, null, false, false));
+                builder.AppendLine("result_mapper = {{{0}}}", type.ConstructMapper(responseVariable, null, false));
             }
             if (Group == null)
             {

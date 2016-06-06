@@ -278,15 +278,85 @@ namespace Microsoft.Rest.Generator.Ruby.TemplateModels
                  type.BaseModelType.DerivesFrom(possibleAncestorType));
         }
 
-        public static string ConstructMapper(this IType type, string serializedName, IParameter parameter, bool isPageable, bool expandComposite)
+        /// <summary>
+        /// Constructs blueprint of the given <paramref name="type"/>.
+        /// </summary>
+        /// <param name="type">Type for which mapper being generated.</param>
+        /// <param name="serializedName">Serialized name to be used.</param>
+        /// <param name="parameter">Parameter of the composite type to construct the parameter constraints.</param>
+        /// <param name="expandComposite">Expand composite type if <c>true</c> otherwise specify class_name in the mapper.</param>
+        /// <returns>Mapper for the <paramref name="type"/> as string.</returns>
+        public static string ConstructMapper(this IType type, string serializedName, IParameter parameter, bool expandComposite)
         {
             var builder = new IndentedStringBuilder("  ");
+
+            CompositeType composite = type as CompositeType;
+            SequenceType sequence = type as SequenceType;
+            DictionaryType dictionary = type as DictionaryType;
+            PrimaryType primary = type as PrimaryType;
+            EnumType enumType = type as EnumType;
+            builder.AppendLine("").Indent();
+
+            builder.AppendLine(type.AddMetaData(serializedName, parameter));
+
+            if (primary != null)
+            {
+                builder.AppendLine(primary.ContructMapperForPrimaryType());
+            }
+            else if (enumType != null && enumType.Name != null)
+            {
+                builder.AppendLine(enumType.ContructMapperForEnumType());
+            }
+            else if (sequence != null)
+            {
+                builder.AppendLine(sequence.ContructMapperForSequenceType());
+            }
+            else if (dictionary != null)
+            {
+                builder.AppendLine(dictionary.ContructMapperForDictionaryType());
+            }
+            else if (composite != null)
+            {
+                builder.AppendLine(composite.ContructMapperForCompositeType(expandComposite));
+            }
+            else
+            {
+                throw new NotImplementedException(string.Format(CultureInfo.InvariantCulture, "{0} is not a supported Type.", type));
+            }
+            return builder.ToString();
+        }
+
+        /// <summary>
+        /// Adds metadata to the given <paramref name="type"/>.
+        /// </summary>
+        /// <param name="type">Type for which metadata being generated.</param>
+        /// <param name="serializedName">Serialized name to be used.</param>
+        /// <param name="parameter">Parameter of the composite type to construct the parameter constraints.</param>
+        /// <returns>Metadata as string.</returns>
+        private static string AddMetaData(this IType type, string serializedName, IParameter parameter)
+        {
+            if (type == null)
+            {
+                throw new ArgumentNullException(nameof(type));
+            }
+
+            if (serializedName == null)
+            {
+                throw new ArgumentNullException(nameof(serializedName));
+            }
+
+            IndentedStringBuilder builder = new IndentedStringBuilder("  ");
+
+            Dictionary<Constraint, string> constraints = null;
             string defaultValue = null;
             bool isRequired = false;
             bool isConstant = false;
             bool isReadOnly = false;
-            Dictionary<Constraint, string> constraints = null;
             var property = parameter as Property;
+            if (property != null)
+            {
+                isReadOnly = property.IsReadOnly;
+            }
             if (parameter != null)
             {
                 defaultValue = parameter.DefaultValue;
@@ -294,20 +364,13 @@ namespace Microsoft.Rest.Generator.Ruby.TemplateModels
                 isConstant = parameter.IsConstant;
                 constraints = parameter.Constraints;
             }
-            if (property != null)
-            {
-                isReadOnly = property.IsReadOnly;
-            }
+
             CompositeType composite = type as CompositeType;
-            if (composite != null && composite.ContainsConstantProperties && (parameter != null && parameter.IsRequired))
+            if (composite != null && composite.ContainsConstantProperties && isRequired)
             {
                 defaultValue = "{}";
             }
-            SequenceType sequence = type as SequenceType;
-            DictionaryType dictionary = type as DictionaryType;
-            PrimaryType primary = type as PrimaryType;
-            EnumType enumType = type as EnumType;
-            builder.AppendLine("").Indent();
+
             if (isRequired)
             {
                 builder.AppendLine("required: true,");
@@ -332,6 +395,7 @@ namespace Microsoft.Rest.Generator.Ruby.TemplateModels
             {
                 builder.AppendLine("default_value: {0},", defaultValue);
             }
+
             if (constraints != null && constraints.Count > 0)
             {
                 builder.AppendLine("constraints: {").Indent();
@@ -352,181 +416,99 @@ namespace Microsoft.Rest.Generator.Ruby.TemplateModels
                         builder.AppendLine("{0}: {1}", keys[j], constraintValue);
                     }
                 }
-                builder.Outdent().AppendLine("},");
+                builder.Outdent()
+                    .AppendLine("},");
             }
-            // Add type information 
-            if (primary != null)
-            {
-                if (primary.Type == KnownPrimaryType.Boolean)
-                {
-                    builder.AppendLine("type: {").Indent().AppendLine("name: 'Boolean'").Outdent().AppendLine("}");
-                }
-                else if (primary.Type == KnownPrimaryType.Double)
-                {
-                    builder.AppendLine("type: {").Indent().AppendLine("name: 'Double'").Outdent().AppendLine("}");
-                }
-                else if (primary.Type == KnownPrimaryType.Int || primary.Type == KnownPrimaryType.Long ||
-                    primary.Type == KnownPrimaryType.Decimal)
-                {
-                    builder.AppendLine("type: {").Indent().AppendLine("name: 'Number'").Outdent().AppendLine("}");
-                }
-                else if (primary.Type == KnownPrimaryType.String || primary.Type == KnownPrimaryType.Uuid)
-                {
-                    builder.AppendLine("type: {").Indent().AppendLine("name: 'String'").Outdent().AppendLine("}");
-                }
-                else if (primary.Type == KnownPrimaryType.Uuid)
-                {
-                    builder.AppendLine("type: {").Indent().AppendLine("name: 'Uuid'").Outdent().AppendLine("}");
-                }
-                else if (primary.Type == KnownPrimaryType.ByteArray)
-                {
-                    builder.AppendLine("type: {").Indent().AppendLine("name: 'ByteArray'").Outdent().AppendLine("}");
-                }
-                else if (primary.Type == KnownPrimaryType.Base64Url)
-                {
-                    builder.AppendLine("type: {").Indent().AppendLine("name: 'Base64Url'").Outdent().AppendLine("}");
-                }
-                else if (primary.Type == KnownPrimaryType.Date)
-                {
-                    builder.AppendLine("type: {").Indent().AppendLine("name: 'Date'").Outdent().AppendLine("}");
-                }
-                else if (primary.Type == KnownPrimaryType.DateTime)
-                {
-                    builder.AppendLine("type: {").Indent().AppendLine("name: 'DateTime'").Outdent().AppendLine("}");
-                }
-                else if (primary.Type == KnownPrimaryType.DateTimeRfc1123)
-                {
-                    builder.AppendLine("type: {").Indent().AppendLine("name: 'DateTimeRfc1123'").Outdent().AppendLine("}");
-                }
-                else if (primary.Type == KnownPrimaryType.TimeSpan)
-                {
-                    builder.AppendLine("type: {").Indent().AppendLine("name: 'TimeSpan'").Outdent().AppendLine("}");
-                }
-                else if (primary.Type == KnownPrimaryType.UnixTime)
-                {
-                    builder.AppendLine("type: {").Indent().AppendLine("name: 'UnixTime'").Outdent().AppendLine("}");
-                }
-                else if (primary.Type == KnownPrimaryType.Object)
-                {
-                    builder.AppendLine("type: {").Indent().AppendLine("name: 'Object'").Outdent().AppendLine("}");
-                }
-                else if (primary.Type == KnownPrimaryType.Stream)
-                {
-                    builder.AppendLine("type: {").Indent().AppendLine("name: 'Stream'").Outdent().AppendLine("}");
-                }
-                else
-                {
-                    throw new NotImplementedException(string.Format(CultureInfo.InvariantCulture, "{0} is not a supported Type.", primary));
-                }
-            }
-            else if (enumType != null && enumType.Name != null)
-            {
-                builder.AppendLine("type: {")
-                         .Indent()
-                         .AppendLine("name: 'Enum',")
-                         .AppendLine("allowedValues: {0}", enumType.GetEnumValuesArray())
-                       .Outdent()
-                       .AppendLine("}");
-            }
-            else if (sequence != null)
-            {
-                builder.AppendLine("type: {")
-                         .Indent()
-                         .AppendLine("name: 'Sequence',")
-                         .AppendLine("element: {")
-                           .Indent()
-                           .AppendLine("{0}", sequence.ElementType.ConstructMapper(sequence.ElementType.Name + "ElementType", null, false, false))
-                         .Outdent().AppendLine("}").Outdent().AppendLine("}");
-            }
-            else if (dictionary != null)
-            {
-                builder.AppendLine("type: {")
-                         .Indent()
-                         .AppendLine("name: 'Dictionary',")
-                         .AppendLine("value: {")
-                           .Indent()
-                           .AppendLine("{0}", dictionary.ValueType.ConstructMapper(dictionary.ValueType.Name + "ElementType", null, false, false))
-                         .Outdent().AppendLine("}").Outdent().AppendLine("}");
-            }
-            else if (composite != null)
-            {
-                builder.AppendLine("type: {")
-                         .Indent()
-                         .AppendLine("name: 'Composite',");
-                if (composite.PolymorphicDiscriminator != null)
-                {
-                    builder.AppendLine("polymorphic_discriminator: '{0}',", composite.PolymorphicDiscriminator);
-                    var polymorphicType = composite;
-                    while (polymorphicType.BaseModelType != null)
-                    {
-                        polymorphicType = polymorphicType.BaseModelType;
-                    }
-                    builder.AppendLine("uber_parent: '{0}',", polymorphicType.Name);
-                }
-                if (!expandComposite)
-                {
-                    builder.AppendLine("class_name: '{0}'", composite.Name).Outdent().AppendLine("}");
-                }
-                else
-                {
-                    builder.AppendLine("class_name: '{0}',", composite.Name)
-                           .AppendLine("model_properties: {").Indent();
-                    var composedPropertyList = new List<Property>(composite.ComposedProperties);
-                    for (var i = 0; i < composedPropertyList.Count; i++)
-                    {
-                        var prop = composedPropertyList[i];
-                        var serializedPropertyName = prop.SerializedName;
-                        PropertyInfo nextLinkName = null;
-                        string nextLinkNameValue = null;
-                        if (isPageable)
-                        {
-                            var itemName = composite.GetType().GetProperty("item_name");
-                            nextLinkName = composite.GetType().GetProperty("next_link_name");
-                            nextLinkNameValue = (string)nextLinkName.GetValue(composite);
-                            if (itemName != null && ((string)itemName.GetValue(composite) == prop.Name))
-                            {
-                                serializedPropertyName = "";
-                            }
 
-                            if (prop.Name.Contains("next_link") && nextLinkName != null && nextLinkNameValue == null)
-                            {
-                                continue;
-                            }
-                        }
+            return builder.ToString();
+        }
 
-                        if (i != composedPropertyList.Count - 1)
-                        {
-                            if (!isPageable)
-                            {
-                                builder.AppendLine("{0}: {{{1}}},", prop.Name, prop.Type.ConstructMapper(serializedPropertyName, prop, false, false));
-                            }
-                            else
-                            {
-                                // if pageable and nextlink is also present then we need a comma as nextLink would be the next one to be added
-                                if (nextLinkNameValue != null)
-                                {
-                                    builder.AppendLine("{0}: {{{1}}},", prop.Name, prop.Type.ConstructMapper(serializedPropertyName, prop, false, false));
-                                }
-                                else
-                                {
-                                    builder.AppendLine("{0}: {{{1}}}", prop.Name, prop.Type.ConstructMapper(serializedPropertyName, prop, false, false));
-                                }
-                                    
-                            }   
-                        }
-                        else
-                        {
-                            builder.AppendLine("{0}: {{{1}}}", prop.Name, prop.Type.ConstructMapper(serializedPropertyName, prop, false, false));
-                        }
-                    }
-                    // end of modelProperties and type
-                    builder.Outdent().AppendLine("}").Outdent().AppendLine("}");
-                }
+        /// <summary>
+        /// Constructs blueprint of the given <paramref name="primary"/>.
+        /// </summary>
+        /// <param name="primary">PrimaryType for which mapper being generated.</param>
+        /// <returns>Mapper for the <paramref name="primary"/> as string.</returns>
+        private static string ContructMapperForPrimaryType(this PrimaryType primary)
+        {
+            if (primary == null)
+            {
+                throw new ArgumentNullException(nameof(primary));
+            }
+
+            IndentedStringBuilder builder = new IndentedStringBuilder("  ");
+
+            if (primary.Type == KnownPrimaryType.Boolean)
+            {
+                builder.AppendLine("type: {").Indent().AppendLine("name: 'Boolean'").Outdent().AppendLine("}");
+            }
+            else if (primary.Type == KnownPrimaryType.Double)
+            {
+                builder.AppendLine("type: {").Indent().AppendLine("name: 'Double'").Outdent().AppendLine("}");
+            }
+            else if (primary.Type == KnownPrimaryType.Int || primary.Type == KnownPrimaryType.Long ||
+                primary.Type == KnownPrimaryType.Decimal)
+            {
+                builder.AppendLine("type: {").Indent().AppendLine("name: 'Number'").Outdent().AppendLine("}");
+            }
+            else if (primary.Type == KnownPrimaryType.String || primary.Type == KnownPrimaryType.Uuid)
+            {
+                builder.AppendLine("type: {").Indent().AppendLine("name: 'String'").Outdent().AppendLine("}");
+            }
+            else if (primary.Type == KnownPrimaryType.ByteArray)
+            {
+                builder.AppendLine("type: {").Indent().AppendLine("name: 'ByteArray'").Outdent().AppendLine("}");
+            }
+            else if (primary.Type == KnownPrimaryType.Base64Url)
+            {
+                builder.AppendLine("type: {").Indent().AppendLine("name: 'Base64Url'").Outdent().AppendLine("}");
+            }
+            else if (primary.Type == KnownPrimaryType.Date)
+            {
+                builder.AppendLine("type: {").Indent().AppendLine("name: 'Date'").Outdent().AppendLine("}");
+            }
+            else if (primary.Type == KnownPrimaryType.DateTime)
+            {
+                builder.AppendLine("type: {").Indent().AppendLine("name: 'DateTime'").Outdent().AppendLine("}");
+            }
+            else if (primary.Type == KnownPrimaryType.DateTimeRfc1123)
+            {
+                builder.AppendLine("type: {").Indent().AppendLine("name: 'DateTimeRfc1123'").Outdent().AppendLine("}");
+            }
+            else if (primary.Type == KnownPrimaryType.TimeSpan)
+            {
+                builder.AppendLine("type: {").Indent().AppendLine("name: 'TimeSpan'").Outdent().AppendLine("}");
+            }
+            else if (primary.Type == KnownPrimaryType.UnixTime)
+            {
+                builder.AppendLine("type: {").Indent().AppendLine("name: 'UnixTime'").Outdent().AppendLine("}");
             }
             else
             {
-                throw new NotImplementedException(string.Format(CultureInfo.InvariantCulture, "{0} is not a supported Type.", primary));
+                throw new NotImplementedException(string.Format(CultureInfo.InvariantCulture, "{0} is not a supported Type.", primary.Type));
             }
+
+            return builder.ToString();
+        }
+
+        /// <summary>
+        /// Constructs blueprint of the given <paramref name="enumeration"/>.
+        /// </summary>
+        /// <param name="enumeration">EnumType for which mapper being generated.</param>
+        /// <returns>Mapper for the <paramref name="enumeration"/> as string.</returns>
+        private static string ContructMapperForEnumType(this EnumType enumeration)
+        {
+            if (enumeration == null)
+            {
+                throw new ArgumentNullException(nameof(enumeration));
+            }
+
+            IndentedStringBuilder builder = new IndentedStringBuilder("  ");
+
+            builder.AppendLine("type: {").Indent()
+                .AppendLine("name: 'Enum',")
+                .AppendLine("allowedValues: {0}", enumeration.GetEnumValuesArray()).Outdent()
+                .AppendLine("}");
+
             return builder.ToString();
         }
 
@@ -535,7 +517,7 @@ namespace Microsoft.Rest.Generator.Ruby.TemplateModels
         /// </summary>
         /// <param name="type">EnumType to model as Javascript Array</param>
         /// <returns>The Javascript Array as a string</returns>
-        public static string GetEnumValuesArray(this EnumType type)
+        private static string GetEnumValuesArray(this EnumType type)
         {
             if (type == null)
             {
@@ -545,6 +527,114 @@ namespace Microsoft.Rest.Generator.Ruby.TemplateModels
             return string.Format(CultureInfo.InvariantCulture,
                 "[ {0} ]", string.Join(", ",
                 type.Values.Select(p => string.Format(CultureInfo.InvariantCulture, "'{0}'", p.Name))));
+        }
+
+        /// <summary>
+        /// Constructs blueprint of the given <paramref name="sequence"/>.
+        /// </summary>
+        /// <param name="sequence">SequenceType for which mapper being generated.</param>
+        /// <returns>Mapper for the <paramref name="sequence"/> as string.</returns>
+        private static string ContructMapperForSequenceType(this SequenceType sequence)
+        {
+            if (sequence == null)
+            {
+                throw new ArgumentNullException(nameof(sequence));
+            }
+
+            IndentedStringBuilder builder = new IndentedStringBuilder("  ");
+
+            builder.AppendLine("type: {").Indent()
+                     .AppendLine("name: 'Sequence',")
+                     .AppendLine("element: {").Indent()
+                     .AppendLine("{0}", sequence.ElementType.ConstructMapper(sequence.ElementType.Name + "ElementType", null, false)).Outdent()
+                     .AppendLine("}").Outdent()
+                     .AppendLine("}");
+
+            return builder.ToString();
+        }
+
+        /// <summary>
+        /// Constructs blueprint of the given <paramref name="dictionary"/>.
+        /// </summary>
+        /// <param name="dictionary">DictionaryType for which mapper being generated.</param>
+        /// <returns>Mapper for the <paramref name="dictionary"/> as string.</returns>
+        private static string ContructMapperForDictionaryType(this DictionaryType dictionary)
+        {
+            if (dictionary == null)
+            {
+                throw new ArgumentNullException(nameof(dictionary));
+            }
+
+            IndentedStringBuilder builder = new IndentedStringBuilder("  ");
+
+            builder.AppendLine("type: {").Indent()
+                .AppendLine("name: 'Dictionary',")
+                .AppendLine("value: {").Indent()
+                .AppendLine("{0}", dictionary.ValueType.ConstructMapper(dictionary.ValueType.Name + "ElementType", null, false)).Outdent()
+                .AppendLine("}").Outdent()
+                .AppendLine("}");
+
+            return builder.ToString();
+        }
+
+        /// <summary>
+        /// Constructs blueprint of the given <paramref name="composite"/>.
+        /// </summary>
+        /// <param name="composite">CompositeType for which mapper being generated.</param>
+        /// <param name="expandComposite">Expand composite type if <c>true</c> otherwise specify class_name in the mapper.</param>
+        /// <returns>Mapper for the <paramref name="composite"/> as string.</returns>
+        private static string ContructMapperForCompositeType(this CompositeType composite, bool expandComposite)
+        {
+            if (composite == null)
+            {
+                throw new ArgumentNullException(nameof(composite));
+            }
+
+            IndentedStringBuilder builder = new IndentedStringBuilder("  ");
+
+            builder.AppendLine("type: {").Indent()
+                .AppendLine("name: 'Composite',");
+
+            if (composite.PolymorphicDiscriminator != null)
+            {
+                builder.AppendLine("polymorphic_discriminator: '{0}',", composite.PolymorphicDiscriminator);
+                var polymorphicType = composite;
+                while (polymorphicType.BaseModelType != null)
+                {
+                    polymorphicType = polymorphicType.BaseModelType;
+                }
+                builder.AppendLine("uber_parent: '{0}',", polymorphicType.Name);
+            }
+            if (!expandComposite)
+            {
+                builder.AppendLine("class_name: '{0}'", composite.Name).Outdent().AppendLine("}");
+            }
+            else
+            {
+                builder.AppendLine("class_name: '{0}',", composite.Name)
+                       .AppendLine("model_properties: {").Indent();
+                var composedPropertyList = new List<Property>(composite.ComposedProperties);
+                for (var i = 0; i < composedPropertyList.Count; i++)
+                {
+                    var prop = composedPropertyList[i];
+                    var serializedPropertyName = prop.SerializedName;
+
+                    if (i != composedPropertyList.Count - 1)
+                    {
+                        builder.AppendLine("{0}: {{{1}}},", prop.Name, prop.Type.ConstructMapper(serializedPropertyName, prop, false));
+                    }
+                    else
+                    {
+                        builder.AppendLine("{0}: {{{1}}}", prop.Name, prop.Type.ConstructMapper(serializedPropertyName, prop, false));
+                    }
+                }
+                // end of modelProperties and type
+                builder.Outdent().
+                    AppendLine("}").Outdent().
+                    AppendLine("}");
+            }
+
+            return builder.ToString();
         }
     }
 }

@@ -80,7 +80,7 @@ module MsRest
         result = ""
         case mapper[:type][:name]
           when 'Number'
-            result = Integer(response_body)
+            result = Integer(response_body) unless response_body.to_s.empty?
           when 'Double'
             result = Float(response_body) unless response_body.to_s.empty?
           when 'ByteArray'
@@ -201,7 +201,7 @@ module MsRest
         unless mapper[:default_value].nil?
           object = mapper[:default_value] if object.nil?
         end
-        object = mapper[:default_value] if mapper[:isConstant]
+        object = mapper[:default_value] if mapper[:is_constant]
 
         payload = Hash.new
         mapper_type = mapper[:type][:name]

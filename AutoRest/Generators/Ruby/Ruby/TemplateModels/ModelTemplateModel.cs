@@ -159,7 +159,7 @@ namespace Microsoft.Rest.Generator.Ruby
 
         public virtual string ConstructModelMapper()
         {
-            var modelMapper = this.ConstructMapper(SerializedName, null, false, true);
+            var modelMapper = this.ConstructMapper(SerializedName, null, true);
             var builder = new IndentedStringBuilder("  ");
             builder.AppendLine("{{{0}}}", modelMapper);
             return builder.ToString();
