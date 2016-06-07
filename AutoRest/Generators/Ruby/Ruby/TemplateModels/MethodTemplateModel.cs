@@ -618,6 +618,7 @@ namespace Microsoft.Rest.Generator.Ruby
             return builder.ToString();
         }
 
+        /// <summary>
         /// Builds null check expression for the given <paramref name="transformation"/>.
         /// </summary>
         /// <param name="transformation">ParameterTransformation for which to build null check expression.</param>
