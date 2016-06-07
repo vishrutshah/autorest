@@ -4,8 +4,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.Rest.Generator.ClientModel;
-using Microsoft.Rest.Generator.Utilities;
 using Microsoft.Rest.Generator.Ruby.TemplateModels;
+using Microsoft.Rest.Generator.Utilities;
 
 namespace Microsoft.Rest.Generator.Ruby
 {
@@ -61,7 +61,7 @@ namespace Microsoft.Rest.Generator.Ruby
         {
             get
             {
-                return new List<string> {};
+                return new List<string> { };
             }
         }
 
@@ -91,7 +91,7 @@ namespace Microsoft.Rest.Generator.Ruby
         /// </summary>
         public string PolymorphicDiscriminatorProperty
         {
-            get 
+            get
             {
                 if (string.IsNullOrEmpty(this.PolymorphicDiscriminator) && this.parent != null)
                 {
@@ -157,6 +157,10 @@ namespace Microsoft.Rest.Generator.Ruby
             return this.BaseModelType != null ? " < " + this.BaseModelType.Name : string.Empty;
         }
 
+        /// <summary>
+        /// Constructs mapper for the model class.
+        /// </summary>
+        /// <returns>Mapper as string for this model class.</returns>
         public virtual string ConstructModelMapper()
         {
             var modelMapper = this.ConstructMapper(SerializedName, null, true);

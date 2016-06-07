@@ -119,9 +119,9 @@ namespace Microsoft.Rest.Generator.Azure.Ruby
             get
             {
                 return new List<string>
-				{
-					"MsRestAzure"
-				};
+                {
+                    "MsRestAzure"
+                };
             }
         }
 

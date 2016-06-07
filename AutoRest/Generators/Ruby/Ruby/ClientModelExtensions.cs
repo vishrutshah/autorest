@@ -2,15 +2,15 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
-using Microsoft.Rest.Generator.ClientModel;
-using System.Linq;
 using System.Globalization;
+using System.Linq;
+using Microsoft.Rest.Generator.ClientModel;
 
 namespace Microsoft.Rest.Generator.Ruby.TemplateModels
 {
-    using Utilities;
     using System.Collections.Generic;
     using System.Reflection;
+    using Utilities;
 
     /// <summary>
     /// Keeps a few aux method used across all templates/models.
@@ -286,8 +286,14 @@ namespace Microsoft.Rest.Generator.Ruby.TemplateModels
         /// <param name="parameter">Parameter of the composite type to construct the parameter constraints.</param>
         /// <param name="expandComposite">Expand composite type if <c>true</c> otherwise specify class_name in the mapper.</param>
         /// <returns>Mapper for the <paramref name="type"/> as string.</returns>
+        /// <exception cref="ArgumentNullException">Thrown when a required parameter is null.</exception>
         public static string ConstructMapper(this IType type, string serializedName, IParameter parameter, bool expandComposite)
         {
+            if (type == null)
+            {
+                throw new ArgumentNullException(nameof(type));
+            }
+
             var builder = new IndentedStringBuilder("  ");
 
             CompositeType composite = type as CompositeType;
@@ -333,6 +339,7 @@ namespace Microsoft.Rest.Generator.Ruby.TemplateModels
         /// <param name="serializedName">Serialized name to be used.</param>
         /// <param name="parameter">Parameter of the composite type to construct the parameter constraints.</param>
         /// <returns>Metadata as string.</returns>
+        /// <exception cref="ArgumentNullException">Thrown when a required parameter is null.</exception>
         private static string AddMetaData(this IType type, string serializedName, IParameter parameter)
         {
             if (type == null)
@@ -428,6 +435,7 @@ namespace Microsoft.Rest.Generator.Ruby.TemplateModels
         /// </summary>
         /// <param name="primary">PrimaryType for which mapper being generated.</param>
         /// <returns>Mapper for the <paramref name="primary"/> as string.</returns>
+        /// <exception cref="ArgumentNullException">Thrown when a required parameter is null.</exception>
         private static string ContructMapperForPrimaryType(this PrimaryType primary)
         {
             if (primary == null)
@@ -495,6 +503,7 @@ namespace Microsoft.Rest.Generator.Ruby.TemplateModels
         /// </summary>
         /// <param name="enumeration">EnumType for which mapper being generated.</param>
         /// <returns>Mapper for the <paramref name="enumeration"/> as string.</returns>
+        /// <exception cref="ArgumentNullException">Thrown when a required parameter is null.</exception>
         private static string ContructMapperForEnumType(this EnumType enumeration)
         {
             if (enumeration == null)
@@ -517,6 +526,7 @@ namespace Microsoft.Rest.Generator.Ruby.TemplateModels
         /// </summary>
         /// <param name="type">EnumType to model as Javascript Array</param>
         /// <returns>The Javascript Array as a string</returns>
+        /// <exception cref="ArgumentNullException">Thrown when a required parameter is null.</exception>
         private static string GetEnumValuesArray(this EnumType type)
         {
             if (type == null)
@@ -534,6 +544,7 @@ namespace Microsoft.Rest.Generator.Ruby.TemplateModels
         /// </summary>
         /// <param name="sequence">SequenceType for which mapper being generated.</param>
         /// <returns>Mapper for the <paramref name="sequence"/> as string.</returns>
+        /// <exception cref="ArgumentNullException">Thrown when a required parameter is null.</exception>
         private static string ContructMapperForSequenceType(this SequenceType sequence)
         {
             if (sequence == null)
@@ -558,6 +569,7 @@ namespace Microsoft.Rest.Generator.Ruby.TemplateModels
         /// </summary>
         /// <param name="dictionary">DictionaryType for which mapper being generated.</param>
         /// <returns>Mapper for the <paramref name="dictionary"/> as string.</returns>
+        /// <exception cref="ArgumentNullException">Thrown when a required parameter is null.</exception>
         private static string ContructMapperForDictionaryType(this DictionaryType dictionary)
         {
             if (dictionary == null)
@@ -583,6 +595,7 @@ namespace Microsoft.Rest.Generator.Ruby.TemplateModels
         /// <param name="composite">CompositeType for which mapper being generated.</param>
         /// <param name="expandComposite">Expand composite type if <c>true</c> otherwise specify class_name in the mapper.</param>
         /// <returns>Mapper for the <paramref name="composite"/> as string.</returns>
+        /// <exception cref="ArgumentNullException">Thrown when a required parameter is null.</exception>
         private static string ContructMapperForCompositeType(this CompositeType composite, bool expandComposite)
         {
             if (composite == null)

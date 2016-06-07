@@ -122,8 +122,11 @@ namespace Microsoft.Rest.Generator.Ruby
         /// </summary>
         public virtual IEnumerable<ParameterTemplateModel> EncodingPathParams
         {
-            get { return AllPathParams.Where(p => !(p.Extensions.ContainsKey(Generator.Extensions.SkipUrlEncodingExtension) &&
-                    String.Equals(p.Extensions[Generator.Extensions.SkipUrlEncodingExtension].ToString(), "true", StringComparison.OrdinalIgnoreCase))); }
+            get
+            {
+                return AllPathParams.Where(p => !(p.Extensions.ContainsKey(Generator.Extensions.SkipUrlEncodingExtension) &&
+                  String.Equals(p.Extensions[Generator.Extensions.SkipUrlEncodingExtension].ToString(), "true", StringComparison.OrdinalIgnoreCase)));
+            }
         }
 
         /// <summary>
@@ -133,7 +136,7 @@ namespace Microsoft.Rest.Generator.Ruby
         {
             get
             {
-                return AllPathParams.Where(p => 
+                return AllPathParams.Where(p =>
                     (p.Extensions.ContainsKey(Generator.Extensions.SkipUrlEncodingExtension) &&
                     String.Equals(p.Extensions[Generator.Extensions.SkipUrlEncodingExtension].ToString(), "true", StringComparison.OrdinalIgnoreCase) &&
                     !p.Extensions.ContainsKey("hostParameter")));
@@ -207,7 +210,7 @@ namespace Microsoft.Rest.Generator.Ruby
         /// Gets the list of method paramater templates.
         /// </summary>
         public List<ParameterTemplateModel> ParameterTemplateModels { get; private set; }
-        
+
         /// <summary>
         /// Gets the list of parameter which need to be included into HTTP header.
         /// </summary>
@@ -271,7 +274,7 @@ namespace Microsoft.Rest.Generator.Ruby
                             PrimaryType type = parameter.Type as PrimaryType;
                             if (type != null)
                             {
-                                if (type.Type == KnownPrimaryType.Boolean || type.Type == KnownPrimaryType.Double || 
+                                if (type.Type == KnownPrimaryType.Boolean || type.Type == KnownPrimaryType.Double ||
                                     type.Type == KnownPrimaryType.Int || type.Type == KnownPrimaryType.Long || type.Type == KnownPrimaryType.String)
                                 {
                                     format = "{0} = " + parameter.DefaultValue;
@@ -498,7 +501,12 @@ namespace Microsoft.Rest.Generator.Ruby
             return urlPathParamName;
         }
 
-       public string ConstructRequestBodyMapper(string outputVariable)
+        /// <summary>
+        /// Constructs mapper for the request body.
+        /// </summary>
+        /// <param name="outputVariable">Name of the output variable.</param>
+        /// <returns>Mapper for the request body as string.</returns>
+        public string ConstructRequestBodyMapper(string outputVariable = "request_mapper")
         {
             var builder = new IndentedStringBuilder("  ");
             if (RequestBody.Type is CompositeType)
@@ -507,14 +515,27 @@ namespace Microsoft.Rest.Generator.Ruby
             }
             else
             {
-                builder.AppendLine("{0} = {{{1}}}", outputVariable, 
+                builder.AppendLine("{0} = {{{1}}}", outputVariable,
                     RequestBody.Type.ConstructMapper(RequestBody.SerializedName, RequestBody, false));
             }
             return builder.ToString();
         }
 
+        /// <summary>
+        /// Creates deserialization logic for the given <paramref name="type"/>.
+        /// </summary>
+        /// <param name="type">Type for which deserialization logic being constructed.</param>
+        /// <param name="valueReference">Reference variable name.</param>
+        /// <param name="responseVariable">Response variable name.</param>
+        /// <returns>Deserialization logic for the given <paramref name="type"/> as string.</returns>
+        /// <exception cref="ArgumentNullException">Thrown when a required parameter is null.</exception>
         public string GetDeserializationString(IType type, string valueReference = "result", string responseVariable = "parsed_response")
         {
+            if (type == null)
+            {
+                throw new ArgumentNullException(nameof(type));
+            }
+
             var builder = new IndentedStringBuilder("  ");
             if (type is CompositeType)
             {
@@ -532,7 +553,7 @@ namespace Microsoft.Rest.Generator.Ruby
             {
                 builder.AppendLine("{1} = @client.deserialize(result_mapper, {0}, '{1}')", responseVariable, valueReference);
             }
-
+             
             return builder.ToString();
         }
     }

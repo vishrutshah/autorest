@@ -2,10 +2,10 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System.Collections.Generic;
+using Microsoft.Rest.Generator.Azure.Ruby.Templates;
 using Microsoft.Rest.Generator.ClientModel;
 using Microsoft.Rest.Generator.Ruby;
 using Microsoft.Rest.Generator.Utilities;
-using Microsoft.Rest.Generator.Azure.Ruby.Templates;
 
 namespace Microsoft.Rest.Generator.Azure.Ruby
 {
