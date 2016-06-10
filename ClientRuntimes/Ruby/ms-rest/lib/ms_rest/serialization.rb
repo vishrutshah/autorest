@@ -151,7 +151,16 @@ module MsRest
 
         unless model_props.nil?
           model_props.each do |key, val|
-            result.instance_variable_set("@#{key}", deserialize(val, response_body[val[:serialized_name].to_s], object_name))
+            sub_response_body = nil
+            unless val[:serialized_name].to_s.include? '.'
+              sub_response_body = response_body[val[:serialized_name].to_s]
+            else
+              sub_response_body = response_body
+              levels = val[:serialized_name].to_s.split('.')
+              levels.each { |level| sub_response_body = sub_response_body.nil? ? nil : sub_response_body[level.to_s] }
+            end
+
+            result.instance_variable_set("@#{key}", deserialize(val, sub_response_body, object_name)) unless sub_response_body.nil?
           end
         end
         result

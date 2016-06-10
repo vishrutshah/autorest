@@ -41,15 +41,16 @@ describe 'ModelFlattening' do
   # Array tests
   it 'should get array' do
     result = @client.get_array_async().value!
+    
     # Resource 1
     expect(result.body.count).to eq(3)
     expect(result.body[0].id).to eq("1")
     expect(result.body[0].name).to eq("Resource1")
     expect(result.body[0].location).to eq("Building 44")
     expect(result.body[0].type).to eq("Microsoft.Web/sites")
-    expect(result.body[0].properties.pname).to eq("Product1")
-    expect(result.body[0].properties.provisioning_state).to eq("Succeeded")
-    expect(result.body[0].properties.provisioning_state_values).to eq("OK")
+    expect(result.body[0].pname).to eq("Product1")
+    expect(result.body[0].provisioning_state).to eq("Succeeded")
+    expect(result.body[0].provisioning_state_values).to eq("OK")
     expect(result.body[0].tags["tag1"]).to eq("value1")
     expect(result.body[0].tags["tag2"]).to eq("value3")
 
@@ -78,9 +79,9 @@ describe 'ModelFlattening' do
     expect(result.body["Product1"].name).to eq("Resource1")
     expect(result.body["Product1"].type).to eq("Microsoft.Web/sites")
 
-    expect(result.body["Product1"].properties.provisioning_state_values).to eq("OK")
-    expect(result.body["Product1"].properties.pname).to eq("Product1")
-    expect(result.body["Product1"].properties.provisioning_state).to eq("Succeeded")
+    expect(result.body["Product1"].provisioning_state_values).to eq("OK")
+    expect(result.body["Product1"].pname).to eq("Product1")
+    expect(result.body["Product1"].provisioning_state).to eq("Succeeded")
 
     expect(result.body["Product1"].tags["tag1"]).to eq("value1")
     expect(result.body["Product1"].tags["tag2"]).to eq("value3")
@@ -114,9 +115,9 @@ describe 'ModelFlattening' do
     expect(result.body.dictionaryofresources["Product1"].tags["tag1"]).to eq("value1")
     expect(result.body.dictionaryofresources["Product1"].tags["tag2"]).to eq("value3")
 
-    expect(result.body.dictionaryofresources["Product1"].properties.provisioning_state_values).to eq("OK")
-    expect(result.body.dictionaryofresources["Product1"].properties.pname).to eq("Product1")
-    expect(result.body.dictionaryofresources["Product1"].properties.provisioning_state).to eq("Succeeded")
+    expect(result.body.dictionaryofresources["Product1"].provisioning_state_values).to eq("OK")
+    expect(result.body.dictionaryofresources["Product1"].pname).to eq("Product1")
+    expect(result.body.dictionaryofresources["Product1"].provisioning_state).to eq("Succeeded")
 
     # Resource 2
     expect(result.body.dictionaryofresources["Product2"].id).to eq("2")
@@ -134,9 +135,9 @@ describe 'ModelFlattening' do
     expect(result.body.arrayofresources[0].location).to eq("Building 44")
     expect(result.body.arrayofresources[0].type).to eq("Microsoft.Web/sites")
 
-    expect(result.body.arrayofresources[0].properties.provisioning_state_values).to eq("OK")
-    expect(result.body.arrayofresources[0].properties.pname).to eq("Product4")
-    expect(result.body.arrayofresources[0].properties.provisioning_state).to eq("Succeeded")
+    expect(result.body.arrayofresources[0].provisioning_state_values).to eq("OK")
+    expect(result.body.arrayofresources[0].pname).to eq("Product4")
+    expect(result.body.arrayofresources[0].provisioning_state).to eq("Succeeded")
 
     expect(result.body.arrayofresources[0].tags["tag1"]).to eq("value1")
     expect(result.body.arrayofresources[0].tags["tag2"]).to eq("value3")
