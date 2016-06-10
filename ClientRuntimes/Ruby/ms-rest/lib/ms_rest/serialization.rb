@@ -156,7 +156,7 @@ module MsRest
               sub_response_body = response_body[val[:serialized_name].to_s]
             else
               sub_response_body = response_body
-              levels = val[:serialized_name].to_s.split('.')
+              levels = split_serialized_name(val[:serialized_name].to_s)
               levels.each { |level| sub_response_body = sub_response_body.nil? ? nil : sub_response_body[level.to_s] }
             end
 
@@ -305,7 +305,20 @@ module MsRest
             end
 
             sub_payload = serialize(value, instance_variable, object_name)
-            payload[value[:serialized_name].to_s] = sub_payload unless instance_variable.nil?
+
+            payload_key = nil
+            unless value[:serialized_name].to_s.include? '.'
+              payload[value[:serialized_name].to_s] = sub_payload unless instance_variable.nil?
+            else
+              levels = split_serialized_name(value[:serialized_name].to_s)
+              last_level = levels.pop
+              temp_payload = payload
+              levels.each do |level|
+                temp_payload[level] = Hash.new unless temp_payload.key?(level)
+                temp_payload = temp_payload[level]
+              end
+              temp_payload[last_level] = sub_payload unless sub_payload.nil?
+            end
           end
         end
         payload
@@ -344,6 +357,23 @@ module MsRest
       #
       def get_model(model_name)
         Object.const_get(@context.class.to_s.split('::')[0...-1].join('::') + "::Models::#{model_name}")
+      end
+
+      def split_serialized_name(serialized_name)
+        result = Array.new
+        element = ''
+
+        levels = serialized_name.to_s.split('.')
+        levels.each do |level|
+          unless level.match(/.*\\$/).nil?
+            element = "#{element}#{level.gsub!('\\','')}."
+          else
+            element = "#{element}#{level}"
+            result.push(element) unless element.empty?
+            element = ''
+          end
+        end
+        result
       end
     end
   end

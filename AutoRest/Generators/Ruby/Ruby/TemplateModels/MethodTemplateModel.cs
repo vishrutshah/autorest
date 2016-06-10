@@ -636,10 +636,10 @@ namespace Microsoft.Rest.Generator.Ruby
             }
             else
             {
-                return string.Join(" || ",
+                return string.Join(" && ",
                 transformation.ParameterMappings.Select(m =>
                     string.Format(CultureInfo.InvariantCulture,
-                    "({0}.nil?)", m.InputParameter.Name)));
+                    "{0}.nil?", m.InputParameter.Name)));
             }
         }
     }
