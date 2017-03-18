@@ -5,14 +5,15 @@ using AutoRest.Core.Properties;
 using AutoRest.Swagger.Validation.Core;
 using System.Collections.Generic;
 using AutoRest.Swagger.Model;
+using AutoRest.Swagger.Model.Utilities;
 
 namespace AutoRest.Swagger.Validation
 {
     /// <summary>
-    /// Validates the structure of all Resource Model that it must contain id,
+    /// Validates the structure of Resource Model marked with x-ms-azure-resource extension then it must contain id,
     /// name, type with readonly: true
     /// </summary>
-    public class ResourceModelValidation: ResourceModelValidationBase<Dictionary<string, Schema>>
+    public class XmsAzureResourceModelValidation : ResourceModelValidationBase<Dictionary<string, Schema>>
     {
         /// <summary>
         /// Validates resource models for required properties
@@ -22,7 +23,7 @@ namespace AutoRest.Swagger.Validation
         /// <returns>List of validation messages for violating models</returns>
         public override IEnumerable<ValidationMessage> GetValidationMessages(Dictionary<string, Schema> definitions, RuleContext context)
         {
-            return ValidateResourceModels(context.ResourceModels, definitions, context);
+            return ValidateResourceModels(ValidationUtilities.GetXmsAzureResourceModels(definitions), definitions, context);
         }
     }
 }

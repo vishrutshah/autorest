@@ -109,6 +109,7 @@ namespace AutoRest.Swagger.Model
         /// </summary>
         [Rule(typeof(BooleanPropertyNotRecommended))]
         [Rule(typeof(ResourceModelValidation))]
+        [Rule(typeof(XmsAzureResourceModelValidation))]
         [Rule(typeof(TrackedResourceValidation))]
         [Rule(typeof(TrackedResourcePatchOperationValidation))]
         [Rule(typeof(TrackedResourceGetOperationValidation))]
