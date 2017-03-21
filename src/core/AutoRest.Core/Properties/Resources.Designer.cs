@@ -647,7 +647,7 @@ namespace AutoRest.Core.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to The id, name and type must be maked as readOnly: true for &apos;{0}&apos; resource model. Following properties are missing readOnly: true : &apos;{1}&apos;.
+        ///   Looks up a localized string similar to The id, name and type must be maked as readOnly: true for &apos;{0}&apos; resource model. .
         /// </summary>
         public static string ResourceModelIsNotValid {
             get {

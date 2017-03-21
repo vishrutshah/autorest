@@ -4,6 +4,7 @@
 using AutoRest.Core.Logging;
 using AutoRest.Core.Properties;
 using AutoRest.Swagger.Model;
+using AutoRest.Swagger.Model.Utilities;
 using AutoRest.Swagger.Validation.Core;
 using System.Collections.Generic;
 
@@ -15,7 +16,7 @@ namespace AutoRest.Swagger.Validation
     /// </summary>
     public abstract class ResourceModelValidationBase<T>: TypedRule<T>
     {
-        protected static readonly string[] RequiredProperties = new string[] { "id", "name", "type" };
+        protected static readonly List<string> RequiredProperties = new List<string> { "id", "name", "type" };
 
         /// <summary>
         /// Id of the Rule.
@@ -51,29 +52,9 @@ namespace AutoRest.Swagger.Validation
         {
             foreach (string resourceModel in resourceModels)
             {
-                Schema resourceSchema = null;
-                if (definitions.TryGetValue(resourceModel, out resourceSchema))
+                if (!ValidationUtilities.ContainsReadOnlyProperties(resourceModel, definitions, RequiredProperties))
                 {
-                    if (resourceSchema == null || resourceSchema.Properties.Count == 0)
-                    {
-                        yield return new ValidationMessage(new FileObjectPath(context.File, context.Path), this, resourceModel, string.Join(" , ", RequiredProperties));
-                    }
-
-                    List<string> missingRequiredProperties = new List<string>();
-                    foreach (string requiredProperty in RequiredProperties)
-                    {
-                        bool? isReadOnly = resourceSchema?.Properties.GetValueOrNull(requiredProperty)?.ReadOnly;
-
-                        if (isReadOnly == null || isReadOnly == false)
-                        {
-                            missingRequiredProperties.Add(requiredProperty);
-                        }
-                    }
-
-                    if (missingRequiredProperties.Count > 0)
-                    {
-                        yield return new ValidationMessage(new FileObjectPath(context.File, context.Path), this, resourceModel, string.Join(" , ", missingRequiredProperties.ToArray()));
-                    }
+                    yield return new ValidationMessage(new FileObjectPath(context.File, context.Path), this, resourceModel);
                 }
             }
         }

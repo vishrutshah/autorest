@@ -370,6 +370,13 @@ namespace AutoRest.Swagger.Tests
         public void ResourceModelValidation()
         {
             var messages = ValidateSwagger(Path.Combine(Core.Utilities.Extensions.CodeBaseDirectory, "Resource","Swagger", "Validation", "swagger-ext-resource-validation.json"));
+            messages.AssertOnlyValidationMessage(typeof(ResourceModelValidation), 2);
+        }
+
+        [Fact]
+        public void XMsAzureResourceModelValidation()
+        {
+            var messages = ValidateSwagger(Path.Combine(Core.Utilities.Extensions.CodeBaseDirectory, "Resource", "Swagger", "Validation", "swagger-ext-msresource-validation.json"));
             messages.AssertOnlyValidationMessage(typeof(XmsAzureResourceModelValidation), 1);
         }
 
